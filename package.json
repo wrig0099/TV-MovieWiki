@@ -1,0 +1,17 @@
+{
+  "name": "node-webserver",
+  "version": "0.0.0",
+  "description": "Web Server using Node JS",
+  "author": {
+    "name": "Dr. Tommy Marrinan",
+    "email": "marr4459@stthomas.edu"
+  },
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tmarrinan/node-webserver.git"
+  },
+  "dependencies": {
+    "multiparty": "latest"
+  }
+}

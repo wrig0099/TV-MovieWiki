@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Movie/TV Wiki</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="normalize.css">
+  <link rel="stylesheet" href="skeleton.css">
+  <link rel="stylesheet" href="custom.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+</head>
+<body>
+        <header>
+          <nav>
+            <div class = "menu">
+              <ul>
+                <li><a href="index.html">home</a></li>
+                <li><a href="about.html">about</a></li>
+              </ul>
+            </div>
+          </nav>
+        </header>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+    <div class="row">
+      <div class="twelve.columns" style="margin-top: 25%">
+        <h4>welcome</h4>
+        <p>browse movie data from IMDB's public <a href="https://www.imdb.com/interfaces/">dataset</a></p>
+        <h4>search</h4>
+        <form action="/subscribe" enctype="multipart/form-data" method="POST">
+          <div class="four.columns, floatleft">
+              <input type="text" name="search"><br/>
+          </div>
+          <div class="four.columns, floatleft">
+              <select name="titlesOrPeople">
+                <option value="titles">titles</option>
+                <option value="people">people</option>
+              </select>
+          </div>
+          <div class="four.columns, floatleft">
+              <input type="submit" class="button-primary" value="search">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+</html>
