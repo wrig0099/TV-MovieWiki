@@ -3,6 +3,7 @@ var fs = require('fs');
 var path = require('path');
 var http = require('http');
 var url = require('url');
+var posterImageGetter = require('./imdb_poster.js');
 
 //external NodeJS modules
 var multiparty = require('multiparty');
@@ -60,7 +61,7 @@ var server = http.createServer((req, res) => {
 								console.log('IN PROMISE 4');
 								
 								db.all(sqlG, [], (err, rows) => {
-									console.log('logging rows', rows);
+									//console.log('logging rows', rows);
 									html_codeG = data.toString('utf8');
 									if(err) {
 										throw err;
@@ -82,17 +83,37 @@ var server = http.createServer((req, res) => {
 									});	
 							});
 							var newLine = '';
+							var imageStr2;
 							promise4.then( function() {
-								//
+								
 								db.close();
+								//
+var promise9 = new Promise(function(resolve){
+		imageStr2 = posterImageGetter.GetPosterFromNameId(primConst, function(err,data){
+			console.log('in image function');
+			if(err)
+			{
+				throw err;
+			}
+			imageStr2 = '<img src=\'http://' + data.host + data.path + '\' alt=\'poster image\'></img>';
+			//console.log('imageStr2' + imageStr2);
+			resolve(imageStr2);
+		});
+		//console.log('resolving promise 8');
+		//resolve(html_codeG);
+	});
+promise9.then(function(){
 
+console.log('POSTER IMAGE STRING outside: ' + imageStr2);
+html_codeG = html_codeG.replace('***IMAGE***', imageStr2);
+								//
 								var result;
 								var promise5 = new Promise (function(resolve){
 									console.log('IN PROMISE 5');
 									result = "<ul>";
 											
 									//arr.forEach((elem)=>{
-									console.log('ARRAY: ' + arr.length);
+									//console.log('ARRAY: ' + arr.length);
 
 									var i;
 									var sqlG2 = '';
@@ -100,27 +121,28 @@ var server = http.createServer((req, res) => {
 									//var newLine;
 
 									var promiseArr = new Array();
-
+									var html_result;
 									for(i = 0; i < arr.length; i++)
 									{
-										console.log('For loop: ' + i);
+										//console.log('For loop: ' + i);
 										promiseArr.push( new Promise(function(resolve, reject){
-											console.log('In the for loop ' + i); 
+											//console.log('In the for loop ' + i); 
 											//
-											console.log('____________________________arr[i] outside of the rows: ' +  arr[i] );
+											
 											sqlG2 = 'SELECT * FROM Titles WHERE tconst = \'' + arr[i] + '\'\;';
 											db.all(sqlG2, [], (err, rows) => {
 												if(err) {
 													throw err;
 												}
-												console.log('____________________________prim title inside of the rows: ' +  rows[0].primary_title );
-												console.log('____________________________arr[i] inside of the rows: ' +  arr[i] );
-												var html_result = '<li><a href="singleTitle.html?tconst=' + arr[i] + '">' + rows[0].primary_title + '</a></li>';
-												console.log('result : ' + html_result);
+												//console.log('____________________________prim title inside of the rows: ' +  rows[0].primary_title );
+												//console.log('____________________________arr[i] inside of the rows: ' +  arr[i] );
+												html_result = '<li><a href="singleTitle.html?tconst=' + rows[0].tconst + '">' + rows[0].primary_title + '</a></li>';
+												//console.log('result : ' + html_result);
 												resolve(html_result);
-											});											
-										}));//promise append
-										console.log('out of promise');
+											});				
+											//console.log('____________________________arr[i] outside of the rows: ' +  arr[i] );
+										}));//promise push
+										//console.log('out of promise');
 									}
 
 									Promise.all(promiseArr).then(function(results){
@@ -134,13 +156,14 @@ var server = http.createServer((req, res) => {
 									console.log('IN PROMISE 5 THEN');
 									html_codeG = html_codeG.replace('***KNOWNFOR***', result);
 
-									console.log('html_codeG: ' + html_codeG);
+									//console.log('html_codeG: ' + html_codeG);
 									res.writeHead(200, {'Content-Type': mime.mime_types[ext] || 'text/html'});
 									res.write(html_codeG);
 									res.end();
 								});	
 							});
 						});
+						});//9 then
 
 					}else{ //SINGLE TITLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						console.log('FILE IS SINGLE TITLE');
@@ -152,119 +175,160 @@ var server = http.createServer((req, res) => {
 						});
 						promise3.then(function(){
 							console.log('IN PROMISE 3');
-							console.log('sqlG: ' + sqlG);
+							//console.log('sqlG: ' + sqlG);
 							var promise4 =  new  Promise(function(resolve){
 								console.log('IN PROMISE 4');
 								
 								db.all(sqlG, [], (err, rows) => {
-									console.log('logging rows', rows);
-									html_codeG = data.toString('utf8');
-									if(err) {
-										throw err;
-									}
-									rows.forEach((row) => {
-										html_codeG = html_codeG.replace('***TITLE***', row.primary_title);
-										console.log('html_codeG: ' + html_codeG);
-										html_codeG = html_codeG.replace('***TYPE***', row.title_type);
-										html_codeG = html_codeG.replace('***STARTYEAR***', row.start_year);
-										if(row.death_year === null){
-											html_codeG = html_codeG.replace('***ENDYEAR***', 'none');
-										}else{
-											html_codeG = html_codeG.replace('***ENDYEAR***', row.end_year);
-										}
-										html_codeG = html_codeG.replace('***RUNTIME***', row.runtime_minutes);
-										html_codeG = html_codeG.replace('***GENRE***', row.genres);
-										html_codeG = html_codeG.replace('***RATING***', row.average_rating);
-										html_codeG = html_codeG.replace('***VOTES***', row.num_votes);
-
-									});
-									resolve(html_codeG);
-								});	
-							});
-							var newLine = '';
-							promise4.then( function() {
-								
-								
-
-								db.close();
-								db = new sqlite3.Database('imdb.sqlite3');
-								var sqlG3 = 'SELECT * FROM Principals WHERE tconst = \'' + primConst + '\'';
-								db.all(sqlG3, [], (err, rows) => {
 									//console.log('logging rows', rows);
 									html_codeG = data.toString('utf8');
 									if(err) {
 										throw err;
 									}
 									rows.forEach((row) => {
-										arr.append({"name" : row.nconst, "ordering" : row.ordering});
-										console.log('array inside db: ' + arr);
-										console.log('nconst: ' + row.nconst);
-										console.log('ordering: ' + row.ordering);
+										html_codeG = html_codeG.replace('***TITLE***', row.primary_title);
+										//console.log('html_codeG: ' + html_codeG);
+										html_codeG = html_codeG.replace('***TYPE***', row.title_type);
+										html_codeG = html_codeG.replace('***STARTYEAR***', row.start_year);
+										if(row.end_year === null){
+											html_codeG = html_codeG.replace('***ENDYEAR***', 'none');
+										}else{
+											html_codeG = html_codeG.replace('***ENDYEAR***', row.end_year);
+										}
+										html_codeG = html_codeG.replace('***RUNTIME***', row.runtime_minutes);
+										html_codeG = html_codeG.replace('***GENRE***', row.genres);
+									//
+										
+
 									});
-								});
-								//bubblesort the arr<--do this later
-								db.close();
-								console.log('array outside db: ' + arr);
-								/*
-
-								//
-								//arr = row.known_for_titles.toString().split(',');
-								var result;
-								var promise5 = new Promise (function(resolve){
-									console.log('IN PROMISE 5');
-									result = "<ul>";
-											
-									//arr.forEach((elem)=>{
-									console.log('ARRAY: ' + arr.length);
-
-									var i;
-									var sqlG4 = '';
-									var db = new sqlite3.Database('imdb.sqlite3');
-									//var newLine;
-
-									var promiseArr = new Array();
-
-									for(i = 0; i < arr.length; i++)
-									{
-										console.log('For loop: ' + i);
-										promiseArr.push( new Promise(function(resolve, reject){
-											console.log('In the for loop ' + i); 
-											//
-											console.log('____________________________arr[i] outside of the rows: ' +  arr[i] );
-											sqlG4 = 'SELECT * FROM Names WHERE nconst = \'' + arr[i].name + '\'\;';
-											db.all(sqlG4, [], (err, rows) => {
-												if(err) {
-													throw err;
-												}
-											//	console.log('____________________________prim title inside of the rows: ' +  rows[0].primary_title );
-												var html_result = '<li><a href="singlePerson.html?nconst=' + arr[i].name + '">' + rows[0].primary_name + '</a></li>';
-												console.log('result : ' + html_result);
-												resolve(html_result);
-											});											
-										}));//promise append
-										console.log('out of promise');
-									}
-
-									Promise.all(promiseArr).then(function(results){
-										result += results.join('') + '</ul>';
-										db.close();
-										resolve(result);
-									});
-									
+									resolve(html_codeG);
 								});	
-
-								*/
-
-								//promise5.then(function(){
-									console.log('IN PROMISE 5 THEN');
-									//html_codeG = html_codeG.replace('***TOPBILLED***', result);
-
-									console.log('html_codeG: ' + html_codeG);
-									res.writeHead(200, {'Content-Type': mime.mime_types[ext] || 'text/html'});
-									res.write(html_codeG);
-									res.end();
-								//});	
 							});
+							var newLine = '';
+							var imageStr;
+							promise4.then( function() {
+								
+								
+								db.close();
+								var promise8 = new Promise(function(resolve){
+										imageStr = posterImageGetter.GetPosterFromTitleId(primConst, function(err,data){
+											console.log('in image function');
+											if(err)
+											{
+												throw err;
+											}
+											imageStr = '<img src=\'http://' + data.host + data.path + '\' alt=\'poster image\'></img>';
+											resolve(imageStr);
+										});
+										//console.log('resolving promise 8');
+										//resolve(html_codeG);
+									});
+								promise8.then(function(){
+
+								console.log('POSTER IMAGE STRING outside: ' + imageStr);
+								html_codeG = html_codeG.replace('***IMAGE***', imageStr);
+
+								 db = new sqlite3.Database('imdb.sqlite3');
+								var promise6 = new Promise(function(resolve){
+									sqlG = 'SELECT * FROM Ratings WHERE tconst = \'' + primConst + '\'';
+
+									db.all(sqlG, [], (err, rows) => {
+										//console.log('logging rows', rows);
+										//html_codeG = data.toString('utf8');
+										if(err) {
+											throw err;
+										}
+										rows.forEach((row) => {
+									
+											html_codeG = html_codeG.replace('***RATING***', row.average_rating);
+											html_codeG = html_codeG.replace('***VOTES***', row.num_votes);
+										});
+										resolve(html_codeG);
+									});	
+								});
+								promise6.then( function(){
+									db.close();
+								/*	db = new sqlite3.Database('imdb.sqlite3');
+									var sqlG3 = 'SELECT * FROM Principals WHERE tconst = \'' + primConst + '\'';
+									db.all(sqlG3, [], (err, rows) => {
+										//console.log('logging rows', rows);
+										html_codeG = data.toString('utf8');
+										if(err) {
+											throw err;
+										}
+										rows.forEach((row) => {
+											//arr.push({"name" : row.nconst, "ordering" : row.ordering});
+											console.log('array inside db: ' + arr);
+											console.log('nconst: ' + row.nconst);
+											console.log('ordering: ' + row.ordering);
+										});
+									});
+									//bubblesort the arr<--do this later
+									db.close();
+									console.log('array outside db: ' + arr);
+									*/
+									/*
+
+									//
+									//arr = row.known_for_titles.toString().split(',');
+									var result;
+									var promise5 = new Promise (function(resolve){
+										console.log('IN PROMISE 5');
+										result = "<ul>";
+												
+										//arr.forEach((elem)=>{
+										console.log('ARRAY: ' + arr.length);
+
+										var i;
+										var sqlG4 = '';
+										var db = new sqlite3.Database('imdb.sqlite3');
+										//var newLine;
+
+										var promiseArr = new Array();
+
+										for(i = 0; i < arr.length; i++)
+										{
+											console.log('For loop: ' + i);
+											promiseArr.push( new Promise(function(resolve, reject){
+												console.log('In the for loop ' + i); 
+												//
+												console.log('____________________________arr[i] outside of the rows: ' +  arr[i] );
+												sqlG4 = 'SELECT * FROM Names WHERE nconst = \'' + arr[i].name + '\'\;';
+												db.all(sqlG4, [], (err, rows) => {
+													if(err) {
+														throw err;
+													}
+												//	console.log('____________________________prim title inside of the rows: ' +  rows[0].primary_title );
+													var html_result = '<li><a href="singlePerson.html?nconst=' + arr[i].name + '">' + rows[0].primary_name + '</a></li>';
+													console.log('result : ' + html_result);
+													resolve(html_result);
+												});											
+											}));//promise append
+											console.log('out of promise');
+										}
+
+										Promise.all(promiseArr).then(function(results){
+											result += results.join('') + '</ul>';
+											db.close();
+											resolve(result);
+										});
+										
+									});	
+
+									*/
+
+									//promise5.then(function(){
+										console.log('IN PROMISE 6 THEN');
+										//html_codeG = html_codeG.replace('***TOPBILLED***', result);
+
+										//console.log('html_codeG: ' + html_codeG);
+										res.writeHead(200, {'Content-Type': mime.mime_types[ext] || 'text/html'});
+										res.write(html_codeG);
+										res.end();
+									//});	
+								});//6 then
+							});
+							});//8then?
 						});
 					}
 				}
@@ -288,8 +352,8 @@ var server = http.createServer((req, res) => {
 						}
 						else{
 							var ext = path.extname(serveFile).substring(1);
-							console.log('serving file ' + serveFile + ' (type = ' + mime.mime_types[ext] + ')');
-							console.log(' used version: ' +  mime.version);
+							//console.log('serving file ' + serveFile + ' (type = ' + mime.mime_types[ext] + ')');
+							//console.log(' used version: ' +  mime.version);
 							var htmlRows = '';
 							var html_code = '';
 							var sql= '';
@@ -310,7 +374,7 @@ var server = http.createServer((req, res) => {
 								}
 							});
 							promise2.then(function(){
-								console.log('trying to log rows');
+								//console.log('trying to log rows');
 								var promise1 =  new  Promise(function(resolve){
 									db.all(sql, [], (err, rows) => {
 										console.log('logging rows', rows);
@@ -330,8 +394,8 @@ var server = http.createServer((req, res) => {
 									});	
 								});
 								promise1.then( function() {
-									console.log('htmlRows: ' + htmlRows);
-									console.log('html_code: ' + html_code);
+									//console.log('htmlRows: ' + htmlRows);
+									//console.log('html_code: ' + html_code);
 									res.writeHead(200, {'Content-Type': mime.mime_types[ext] || 'text/html'});
 									res.write(html_code);
 									res.end();
@@ -342,7 +406,7 @@ var server = http.createServer((req, res) => {
 					});
 				}
 				else if(fields.titlesOrPeople == 'titles') {
-					console.log('Field: ' + fields.titlesOrPeople);
+					//console.log('Field: ' + fields.titlesOrPeople);
 					var serveFile = 'titles.html'
 					fs.readFile(path.join(public_dir, serveFile), (err, data) => {
 						if (err){
@@ -352,8 +416,8 @@ var server = http.createServer((req, res) => {
 						}
 						else{
 							var ext = path.extname(serveFile).substring(1);
-							console.log('serving file ' + serveFile + ' (type = ' + mime.mime_types[ext] + ')');
-							console.log(' used version: ' +  mime.version);
+							//console.log('serving file ' + serveFile + ' (type = ' + mime.mime_types[ext] + ')');
+							//console.log(' used version: ' +  mime.version);
 							var htmlRows = '';
 							var html_code = '';
 							var sql= '';
@@ -374,10 +438,10 @@ var server = http.createServer((req, res) => {
 								}
 							});
 							promise2.then(function(){
-								console.log('trying to log rows');
+								//console.log('trying to log rows');
 								var promise1 =  new  Promise(function(resolve){
 									db.all(sql, [], (err, rows) => {
-										console.log('logging rows', rows);
+										//console.log('logging rows', rows);
 										if(err) {
 											throw err;
 										}
@@ -395,8 +459,8 @@ var server = http.createServer((req, res) => {
 									});	
 								});
 								promise1.then( function() {
-									console.log('htmlRows: ' + htmlRows);
-									console.log('html_code: ' + html_code);
+									//console.log('htmlRows: ' + htmlRows);
+									//console.log('html_code: ' + html_code);
 									res.writeHead(200, {'Content-Type': mime.mime_types[ext] || 'text/html'});
 									res.write(html_code);
 									res.end();
